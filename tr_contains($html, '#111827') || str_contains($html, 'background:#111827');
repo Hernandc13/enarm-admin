@@ -1,0 +1,86 @@
+[90m= [39m"""
+  [32m<!doctype html>[39m\n
+  [32m<html lang="es">[39m\n
+  [32m<head>[39m\n
+  [32m  <meta charset="utf-8">[39m\n
+  [32m  <meta name="viewport" content="width=device-width, initial-scale=1">[39m\n
+  [32m  <title>Bienvenido</title>[39m\n
+  [32m</head>[39m\n
+  [32m<body style="margin:0;padding:0;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;">[39m\n
+  [32m  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;padding:24px 0;">[39m\n
+  [32m    <tr>[39m\n
+  [32m      <td align="center">[39m\n
+  [32m        <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(16,24,40,.08);">[39m\n
+  [32m          <tr>[39m\n
+  [32m            <td style="background:#7a0019;padding:18px 24px;">[39m\n
+  [32m              <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:.3px;">[39m\n
+  [32m                ENARM CCM[39m\n
+  [32m              </div>[39m\n
+  [32m              <div style="color:#fff;opacity:.9;font-size:13px;margin-top:4px;">[39m\n
+  [32m                Accesos a tu cuenta[39m\n
+  [32m              </div>[39m\n
+  [32m            </td>[39m\n
+  [32m          </tr>[39m\n
+  \n
+  [32m          <tr>[39m\n
+  [32m            <td style="padding:26px 24px 8px 24px;color:#111827;">[39m\n
+  [32m              <div style="font-size:18px;font-weight:700;margin-bottom:6px;">[39m\n
+  [32m                Hola {{name}},[39m\n
+  [32m              </div>[39m\n
+  [32m              <div style="font-size:14px;line-height:1.6;color:#374151;">[39m\n
+  [32m                Te damos la bienvenida. A continuación encontrarás tus accesos para iniciar sesión:[39m\n
+  [32m              </div>[39m\n
+  [32m            </td>[39m\n
+  [32m          </tr>[39m\n
+  \n
+  [32m          <tr>[39m\n
+  [32m            <td style="padding:14px 24px;">[39m\n
+  [32m              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:12px;">[39m\n
+  [32m                <tr>[39m\n
+  [32m                  <td style="padding:14px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;color:#111827;font-weight:700;">[39m\n
+  [32m                    Datos de acceso[39m\n
+  [32m                  </td>[39m\n
+  [32m                </tr>[39m\n
+  [32m                <tr>[39m\n
+  [32m                  <td style="padding:14px 16px;color:#111827;">[39m\n
+  [32m                    <div style="font-size:13px;color:#6b7280;">Correo</div>[39m\n
+  [32m                    <div style="font-size:14px;font-weight:700;margin-top:2px;">{{email}}</div>[39m\n
+  \n
+  [32m                    <div style="height:10px;">[39m[32m</div>[39m\n
+  \n
+  [32m                    <div style="font-size:13px;color:#6b7280;">Contraseña</div>[39m\n
+  [32m                    <div style="font-size:14px;font-weight:700;margin-top:2px;">{{password}}</div>[39m\n
+  [32m                  </td>[39m\n
+  [32m                </tr>[39m\n
+  [32m              </table>[39m\n
+  [32m            </td>[39m\n
+  [32m          </tr>[39m\n
+  \n
+  [32m          <tr>[39m\n
+  [32m            <td style="padding:8px 24px 22px 24px;">[39m\n
+  [32m              <a href="{{app_url}}" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;font-weight:700;font-size:14px;padding:12px 16px;border-radius:10px;">[39m\n
+  [32m                Iniciar sesión[39m\n
+  [32m              </a>[39m\n
+  [32m              <div style="font-size:12px;color:#6b7280;margin-top:10px;line-height:1.5;">[39m\n
+  [32m                Si no solicitaste este acceso, ignora este mensaje o contacta al administrador.[39m\n
+  [32m              </div>[39m\n
+  [32m            </td>[39m\n
+  [32m          </tr>[39m\n
+  \n
+  [32m          <tr>[39m\n
+  [32m            <td style="background:#111827;color:#9ca3af;padding:14px 24px;font-size:12px;">[39m\n
+  [32m              © {{year}} ENARM CCM · Mensaje automático[39m\n
+  [32m            </td>[39m\n
+  [32m          </tr>[39m\n
+  [32m        </table>[39m\n
+  \n
+  [32m        <div style="color:#9ca3af;font-size:12px;margin-top:10px;">[39m\n
+  [32m          {{app_url}}[39m\n
+  [32m        </div>[39m\n
+  [32m      </td>[39m\n
+  [32m    </tr>[39m\n
+  [32m  </table>[39m\n
+  [32m</body>[39m\n
+  [32m</html>[39m
+  """
+

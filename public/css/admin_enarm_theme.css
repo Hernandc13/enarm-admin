@@ -1,0 +1,134 @@
+/* ENARM CCM - Theme (Login scoped) */
+:root{
+  --enarm-red: #990017;
+  --enarm-blue: #012e82;
+}
+
+/* =========================
+   LOGIN ONLY (.fi-simple-layout)
+   ========================= */
+
+/* Fondo página login */
+.fi-simple-layout{
+  background: #ffffff !important;
+}
+
+/* Título y subtítulo SOLO login */
+.fi-simple-layout .fi-simple-header-heading,
+.fi-simple-layout .fi-simple-header-subheading{
+  color: var(--enarm-blue) !important;
+}
+
+/* Labels SOLO login */
+.fi-simple-layout .fi-fo-field-wrp-label,
+.fi-simple-layout .fi-fo-field-wrp-label span{
+  color: var(--enarm-blue) !important;
+  font-weight: 600 !important;
+}
+
+/* Texto general SOLO login (si te pinta algo raro, comenta la regla con *) */
+.fi-simple-layout .fi-simple-main{
+  color: var(--enarm-blue) !important;
+}
+
+/* * Esto pinta TODO azul dentro del card del login */
+.fi-simple-layout .fi-simple-main *{
+  color: var(--enarm-blue) !important;
+}
+
+/* Inputs: texto oscuro SOLO login */
+.fi-simple-layout .fi-input,
+.fi-simple-layout .fi-input *{
+  color: #111827 !important;
+}
+
+/* Focus azul SOLO login */
+.fi-simple-layout .fi-input:focus,
+.fi-simple-layout .fi-input-wrp:focus-within{
+  border-color: var(--enarm-blue) !important;
+  box-shadow: 0 0 0 3px rgba(1,46,130,.18) !important;
+}
+
+/* Links SOLO login (IMPORTANTE: ya no es global) */
+.fi-simple-layout .fi-link,
+.fi-simple-layout .fi-link a,
+.fi-simple-layout a{
+  color: var(--enarm-blue) !important;
+}
+
+/* Card principal del login: borde + radius SOLO login */
+.fi-simple-layout .fi-simple-main{
+  border: 1px solid #111827 !important;
+  border-radius: 16px !important;
+}
+
+/* Si hay wrappers internos */
+.fi-simple-layout .fi-simple-main .fi-section,
+.fi-simple-layout .fi-simple-main .fi-card,
+.fi-simple-layout .fi-simple-main .fi-panel{
+  background: transparent !important;
+}
+
+/* Botón SOLO login: rojo + texto blanco */
+.fi-simple-layout .fi-btn-color-primary{
+  background-color: var(--enarm-red) !important;
+  border-color: var(--enarm-red) !important;
+}
+
+.fi-simple-layout .fi-btn.fi-btn-color-primary,
+.fi-simple-layout .fi-btn.fi-btn-color-primary *{
+  color: #ffffff !important;
+}
+
+/* Por si login usa submit sin clases */
+.fi-simple-layout button[type="submit"],
+.fi-simple-layout button[type="submit"] *{
+  color: #ffffff !important;
+}
+
+/* Ajustes opcionales del header (si aún usas spacing del logo) */
+.fi-simple-layout .fi-simple-header{
+  padding-bottom: 12px !important;
+}
+
+/* Si tu subheading lo bajaste por el logo (solo login) */
+.fi-simple-layout .fi-simple-header-subheading{
+  margin-top: 92px !important;
+}
+
+/* =========================
+   PANEL LOGUEADO (NO LOGIN)
+   ========================= */
+
+/* NO fuerces links azules fuera del login */
+.fi:not(.fi-simple-layout) a{
+  color: inherit !important;
+}
+
+/* Botones primarios del panel: texto blanco (ej. Crear Usuario, Importar Excel, etc.) */
+.fi:not(.fi-simple-layout) .fi-page-header .fi-btn.fi-btn-color-primary,
+.fi:not(.fi-simple-layout) .fi-page-header .fi-btn.fi-btn-color-primary *{
+  color: #ffffff !important;
+}
+/* ===== BOTÓN SOLO EN LOGIN (no afecta al dashboard) ===== */
+.fi-simple-layout .fi-btn-color-primary{
+  background-color: var(--enarm-red) !important;
+  border-color: var(--enarm-red) !important;
+}
+
+.fi-simple-layout .fi-btn.fi-btn-color-primary,
+.fi-simple-layout .fi-btn.fi-btn-color-primary *{
+  color: #ffffff !important;
+}
+
+/* Por si en login el submit no trae la clase esperada */
+.fi-simple-layout button[type="submit"],
+.fi-simple-layout button[type="submit"] *{
+  color: #ffffff !important;
+}
+/* ===== PANEL (NO LOGIN): botón "Crear Usuario" texto blanco ===== */
+/* Aplica a botones primarios del panel (header actions) */
+.fi:not(.fi-simple-layout) .fi-btn.fi-btn-color-primary,
+.fi:not(.fi-simple-layout) .fi-btn.fi-btn-color-primary *{
+  color: #ffffff !important;
+}
