@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SimulatorController;
 use App\Http\Controllers\Api\SimulatorAttemptController;
 
-// ✅ IMPORTA TUS CONTROLADORES NUEVOS (ESTO ES LO QUE TE FALTA)
+// ✅ IMPORTA TUS CONTROLADORES NUEVOS
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\RankingController;
 use App\Http\Controllers\Api\SimulatorHistoryController;
@@ -35,6 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Alias: soporta ambos endpoints para no romper Flutter
     Route::post('/intentos/{attempt}/responder', [SimulatorAttemptController::class, 'answer']);
     Route::post('/intentos/{attempt}/respuestas', [SimulatorAttemptController::class, 'answer']);
+
+    // ✅ NUEVO: abandonar intento sin finalizar
+    Route::post('/intentos/{attempt}/abandonar', [SimulatorAttemptController::class, 'abandon']);
 
     Route::post('/intentos/{attempt}/finalizar', [SimulatorAttemptController::class, 'finish']);
 

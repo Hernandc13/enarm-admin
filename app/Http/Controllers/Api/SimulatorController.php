@@ -15,6 +15,7 @@ class SimulatorController extends Controller
 
         if (!(bool)$user->has_app_access || !empty($user->revoked_at)) {
             $user->currentAccessToken()?->delete();
+
             return response()->json([
                 'ok' => false,
                 'reason' => 'NO_APP_ACCESS',
@@ -56,7 +57,7 @@ class SimulatorController extends Controller
                     'max_attempts' => $s->max_attempts,
                     'time_limit_seconds' => $s->time_limit_seconds,
                     'min_passing_score' => $s->min_passing_score,
-                    'mode' => $s->mode ?? (defined(Simulator::class.'::MODE_EXAM') ? Simulator::MODE_EXAM : 'exam'),
+                    'mode' => $s->mode ?? (defined(Simulator::class . '::MODE_EXAM') ? Simulator::MODE_EXAM : 'exam'),
                 ];
             });
 
@@ -95,7 +96,7 @@ class SimulatorController extends Controller
                 'max_attempts' => $simulator->max_attempts,
                 'time_limit_seconds' => $simulator->time_limit_seconds,
                 'min_passing_score' => $simulator->min_passing_score,
-                'mode' => $simulator->mode ?? (defined(Simulator::class.'::MODE_EXAM') ? Simulator::MODE_EXAM : 'exam'),
+                'mode' => $simulator->mode ?? (defined(Simulator::class . '::MODE_EXAM') ? Simulator::MODE_EXAM : 'exam'),
             ],
         ]);
     }

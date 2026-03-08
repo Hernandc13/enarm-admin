@@ -27,11 +27,12 @@ class SimulatorAttemptController extends Controller
             ], 404);
         }
 
-        // Límite de intentos
+        // ✅ Límite de intentos
+        // abandoned NO cuenta como intento consumido
         if (!is_null($simulator->max_attempts)) {
             $count = SimulatorAttempt::where('user_id', $user->id)
                 ->where('simulator_id', $simulator->id)
-                ->whereIn('status', ['in_progress', 'finished'])
+                ->whereIn('status', ['in_progress', 'finished', 'expired'])
                 ->count();
 
             if ($count >= (int) $simulator->max_attempts) {
@@ -42,7 +43,7 @@ class SimulatorAttemptController extends Controller
             }
         }
 
-        // ✅ Obtener preguntas respetando pivot order (si NO se baraja)
+        // Obtener preguntas respetando pivot order si NO se baraja
         $qQuery = $simulator->questions()->select('questions.id');
 
         if (!(bool) $simulator->shuffle_questions) {
@@ -80,11 +81,11 @@ class SimulatorAttemptController extends Controller
             $rows = [];
             foreach ($questionIds as $idx => $qid) {
                 $rows[] = [
-                    'attempt_id' => $attempt->id,
-                    'question_id'=> $qid,
-                    'position'   => $idx + 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'attempt_id'  => $attempt->id,
+                    'question_id' => $qid,
+                    'position'    => $idx + 1,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
                 ];
             }
 
@@ -96,15 +97,12 @@ class SimulatorAttemptController extends Controller
         return response()->json([
             'ok'   => true,
             'data' => [
-                'attempt_id'     => $attempt->id,
-                'simulator_id'   => $simulator->id,
-
-                // ✅ NUEVO: modo (study|exam)
-                'mode'           => $simulator->mode ?? Simulator::MODE_EXAM,
-
-                'started_at'     => optional($attempt->started_at)->toIso8601String(),
-                'expires_at'     => optional($attempt->expires_at)->toIso8601String(),
-                'total_questions'=> (int) $attempt->total_questions,
+                'attempt_id'      => $attempt->id,
+                'simulator_id'    => $simulator->id,
+                'mode'            => $simulator->mode ?? Simulator::MODE_EXAM,
+                'started_at'      => optional($attempt->started_at)->toIso8601String(),
+                'expires_at'      => optional($attempt->expires_at)->toIso8601String(),
+                'total_questions' => (int) $attempt->total_questions,
             ],
         ]);
     }
@@ -114,16 +112,30 @@ class SimulatorAttemptController extends Controller
         $user = $request->user();
 
         if ((int) $attempt->user_id !== (int) $user->id) {
-            return response()->json(['ok' => false, 'message' => 'No autorizado.'], 403);
+            return response()->json([
+                'ok' => false,
+                'message' => 'No autorizado.',
+            ], 403);
         }
 
         if ($attempt->status !== 'in_progress') {
-            return response()->json(['ok' => false, 'message' => 'El intento no está activo.'], 422);
+            return response()->json([
+                'ok' => false,
+                'message' => 'El intento no está activo.',
+            ], 422);
         }
 
         if (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at)) {
-            $attempt->update(['status' => 'expired', 'finished_at' => now()]);
-            return response()->json(['ok' => false, 'message' => 'Tiempo agotado.'], 410);
+            // ✅ expira, pero luego finish() todavía puede cerrarlo/calificarlo
+            $attempt->update([
+                'status' => 'expired',
+                'finished_at' => now(),
+            ]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Tiempo agotado.',
+            ], 410);
         }
 
         $limit = (int) ($request->query('limit', 10));
@@ -163,6 +175,7 @@ class SimulatorAttemptController extends Controller
                     }
                 }
             }
+
             return '';
         };
 
@@ -174,7 +187,6 @@ class SimulatorAttemptController extends Controller
                 $questionText = $resolveQuestionText($q);
             }
 
-            // Opciones
             $options = [];
 
             if (method_exists($q, 'options')) {
@@ -214,8 +226,6 @@ class SimulatorAttemptController extends Controller
                 'per_page'       => $paginator->perPage(),
                 'total'          => $paginator->total(),
                 'expires_at'     => optional($attempt->expires_at)->toIso8601String(),
-
-                // ✅ NUEVO: modo del simulador en meta
                 'simulator_mode' => $attempt->simulator?->mode ?? Simulator::MODE_EXAM,
             ],
         ]);
@@ -226,14 +236,29 @@ class SimulatorAttemptController extends Controller
         $user = $request->user();
 
         if ((int) $attempt->user_id !== (int) $user->id) {
-            return response()->json(['ok' => false, 'message' => 'No autorizado.'], 403);
+            return response()->json([
+                'ok' => false,
+                'message' => 'No autorizado.',
+            ], 403);
         }
+
         if ($attempt->status !== 'in_progress') {
-            return response()->json(['ok' => false, 'message' => 'El intento no está activo.'], 422);
+            return response()->json([
+                'ok' => false,
+                'message' => 'El intento no está activo.',
+            ], 422);
         }
+
         if (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at)) {
-            $attempt->update(['status' => 'expired', 'finished_at' => now()]);
-            return response()->json(['ok' => false, 'message' => 'Tiempo agotado.'], 410);
+            $attempt->update([
+                'status' => 'expired',
+                'finished_at' => now(),
+            ]);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Tiempo agotado.',
+            ], 410);
         }
 
         $data = $request->validate([
@@ -247,14 +272,15 @@ class SimulatorAttemptController extends Controller
             ->exists();
 
         if (!$exists) {
-            return response()->json(['ok' => false, 'message' => 'Pregunta inválida para este intento.'], 422);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Pregunta inválida para este intento.',
+            ], 422);
         }
 
         $isCorrect = false;
-
         $question = Question::findOrFail($data['question_id']);
 
-        // ✅ Determinar si es correcta
         if (!is_null($data['selected_option_id']) && method_exists($question, 'options')) {
             $opt = $question->options()->where('id', $data['selected_option_id'])->first();
             if ($opt && isset($opt->is_correct)) {
@@ -291,24 +317,94 @@ class SimulatorAttemptController extends Controller
         ]);
     }
 
+    // ✅ NUEVO MÉTODO: abandonar intento sin finalizar
+    public function abandon(Request $request, SimulatorAttempt $attempt)
+    {
+        $user = $request->user();
+
+        if ((int) $attempt->user_id !== (int) $user->id) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No autorizado.',
+            ], 403);
+        }
+
+        // Si ya está cerrado, ya no se puede abandonar
+        if (in_array($attempt->status, ['finished', 'abandoned'], true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'El intento ya fue cerrado.',
+            ], 422);
+        }
+
+        // Si estaba vencido también lo marcamos como abandonado solo si
+        // el usuario salió voluntariamente antes de finalizar desde app.
+        $attempt->update([
+            'status' => 'abandoned',
+            'finished_at' => now(),
+        ]);
+
+        return response()->json([
+            'ok'   => true,
+            'data' => [
+                'attempt_id' => $attempt->id,
+                'status'     => 'abandoned',
+                'finished_at'=> optional($attempt->finished_at)->toIso8601String(),
+            ],
+            'message' => 'Intento abandonado correctamente.',
+        ]);
+    }
+
     public function finish(Request $request, SimulatorAttempt $attempt)
     {
         $user = $request->user();
 
         if ((int) $attempt->user_id !== (int) $user->id) {
-            return response()->json(['ok' => false, 'message' => 'No autorizado.'], 403);
+            return response()->json([
+                'ok' => false,
+                'message' => 'No autorizado.',
+            ], 403);
         }
 
-        if ($attempt->status !== 'in_progress') {
-            return response()->json(['ok' => false, 'message' => 'El intento ya fue cerrado.'], 422);
-        }
-
-        if (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at)) {
-            $attempt->update(['status' => 'expired', 'finished_at' => now()]);
-            return response()->json(['ok' => false, 'message' => 'Tiempo agotado.'], 410);
+        // ✅ Acepta in_progress o expired
+        if (!in_array($attempt->status, ['in_progress', 'expired'], true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'El intento ya fue cerrado.',
+            ], 422);
         }
 
         $attempt->load('simulator');
+
+        $timedOut = (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at));
+
+        if ($timedOut && $attempt->status === 'in_progress') {
+            $attempt->status = 'expired';
+        }
+
+        // ✅ marcar como incorrectas las no contestadas
+        $answeredIds = $attempt->answers()->pluck('question_id')->all();
+
+        $missing = $attempt->attemptQuestions()
+            ->whereNotIn('question_id', $answeredIds)
+            ->pluck('question_id')
+            ->all();
+
+        if (!empty($missing)) {
+            $rows = [];
+            foreach ($missing as $qid) {
+                $rows[] = [
+                    'attempt_id'         => $attempt->id,
+                    'question_id'        => (int) $qid,
+                    'selected_option_id' => null,
+                    'selected_text'      => null,
+                    'is_correct'         => false,
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ];
+            }
+            SimulatorAttemptAnswer::insert($rows);
+        }
 
         $total   = (int) $attempt->total_questions;
         $correct = (int) $attempt->answers()->where('is_correct', true)->count();
@@ -321,7 +417,6 @@ class SimulatorAttemptController extends Controller
             'status'        => 'finished',
         ]);
 
-        // ✅ IMPORTANTE: actualiza tus stats (record, promedios, counts, etc.)
         (new SimulatorStatsService())->recordFinishedAttempt($attempt->fresh());
 
         $min    = $attempt->simulator?->min_passing_score;
@@ -330,17 +425,15 @@ class SimulatorAttemptController extends Controller
         return response()->json([
             'ok'   => true,
             'data' => [
-                'attempt_id' => $attempt->id,
-
-                // ✅ NUEVO: modo del simulador en resultado
-                'simulator_mode' => $attempt->simulator?->mode ?? Simulator::MODE_EXAM,
-
-                'total_questions' => $total,
-                'correct_count'   => $correct,
-                'score'           => $score,
+                'attempt_id'        => $attempt->id,
+                'simulator_mode'    => $attempt->simulator?->mode ?? Simulator::MODE_EXAM,
+                'total_questions'   => $total,
+                'correct_count'     => $correct,
+                'score'             => $score,
                 'min_passing_score' => $min,
-                'passed'          => $passed,
-                'finished_at'     => optional($attempt->finished_at)->toIso8601String(),
+                'passed'            => $passed,
+                'finished_at'       => optional($attempt->finished_at)->toIso8601String(),
+                'timed_out'         => $timedOut,
             ],
         ]);
     }
