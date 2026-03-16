@@ -6,9 +6,9 @@ use App\Filament\Resources\UserResource;
 use App\Mail\WelcomeAccessMail;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CreateUser extends CreateRecord
 {
@@ -17,9 +17,6 @@ class CreateUser extends CreateRecord
     private ?string $plainPasswordForMail = null;
     private bool $sendWelcomeForMail = true;
 
-    /**
-     *  Al terminar de crear, redirige a la lista de usuarios
-     */
     protected function getRedirectUrl(): string
     {
         return static::$resource::getUrl('index');
@@ -27,34 +24,56 @@ class CreateUser extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $auto  = (bool) ($data['auto_password'] ?? true);
-        $send  = (bool) ($data['send_welcome'] ?? true);
+        $auto = (string) ($data['auto_password'] ?? '1') !== '0';
+        $send = (bool) ($data['send_welcome'] ?? true);
+
         $plain = trim((string) ($data['password_plain'] ?? ''));
+        $plainConfirmation = trim((string) ($data['password_plain_confirmation'] ?? ''));
 
         if ($auto) {
             $plain = Str::password(12);
         } else {
-            if ($plain === '' || mb_strlen($plain) < 8) {
-                $plain = Str::password(12);
+            if ($plain === '') {
+                throw ValidationException::withMessages([
+                    'password_plain' => 'Debes capturar una contraseña manual.',
+                ]);
+            }
+
+            if (mb_strlen($plain) < 8) {
+                throw ValidationException::withMessages([
+                    'password_plain' => 'La contraseña debe tener al menos 8 caracteres.',
+                ]);
+            }
+
+            if ($plain !== $plainConfirmation) {
+                throw ValidationException::withMessages([
+                    'password_plain_confirmation' => 'La confirmación de la contraseña no coincide.',
+                ]);
             }
         }
 
         $this->plainPasswordForMail = $plain;
         $this->sendWelcomeForMail = $send;
 
-        unset($data['auto_password'], $data['send_welcome'], $data['password_plain']);
+        unset(
+            $data['auto_password'],
+            $data['send_welcome'],
+            $data['password_plain'],
+            $data['password_plain_confirmation']
+        );
 
-        $data['password'] = Hash::make($plain);
+        // Tu modelo User ya tiene cast: 'password' => 'hashed'
+        $data['password'] = $plain;
 
-        // usuarios de APP, NO admins
+        // Usuarios APP, no admins
         $data['is_admin'] = false;
 
-        // acceso automático
+        // Acceso a la app habilitado al crear
         $data['has_app_access'] = true;
         $data['granted_at'] = now();
         $data['revoked_at'] = null;
 
-        // manual/excel => no moodle
+        // Usuario manual/excel, no Moodle
         $data['is_from_moodle'] = false;
         $data['moodle_user_id'] = null;
         $data['synced_at'] = null;
@@ -65,6 +84,12 @@ class CreateUser extends CreateRecord
     protected function afterCreate(): void
     {
         if (! $this->sendWelcomeForMail || ! $this->plainPasswordForMail) {
+            Notification::make()
+                ->title('Usuario creado')
+                ->body('El usuario se creó correctamente y no se enviaron accesos por correo.')
+                ->success()
+                ->send();
+
             return;
         }
 
@@ -81,9 +106,9 @@ class CreateUser extends CreateRecord
 
             Notification::make()
                 ->title('Usuario creado y correo enviado')
+                ->body('Los accesos fueron enviados correctamente al correo del usuario.')
                 ->success()
                 ->send();
-
         } catch (\Throwable $e) {
             Notification::make()
                 ->title('Usuario creado, pero no se pudo enviar el correo')

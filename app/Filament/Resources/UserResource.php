@@ -48,16 +48,17 @@ class UserResource extends Resource
                         ->label('Correo')
                         ->email()
                         ->required()
+                        ->unique(ignoreRecord: true)
                         ->maxLength(255),
                 ]),
 
             Forms\Components\Section::make('Información adicional')
                 ->columns(2)
                 ->visible(function (?User $record) {
-                    // Create => null (mostrar)
                     if ($record === null) {
                         return true;
                     }
+
                     return $record->isManualAppUser();
                 })
                 ->schema([
@@ -79,6 +80,53 @@ class UserResource extends Resource
                         ->maxLength(30)
                         ->helperText('Ej: +52 33 1234 5678')
                         ->regex('/^\+?[0-9\s\-\(\)]{7,30}$/'),
+                ]),
+
+            Forms\Components\Section::make('Acceso de la cuenta')
+                ->description('Define cómo se asignará la contraseña y si deseas enviar los accesos al correo del usuario.')
+                ->visible(fn (string $operation): bool => $operation === 'create')
+                ->columns(2)
+                ->schema([
+                    Forms\Components\Radio::make('auto_password')
+                        ->label('Tipo de contraseña')
+                        ->options([
+                            1 => 'Generar contraseña automáticamente',
+                            0 => 'Capturar contraseña manualmente',
+                        ])
+                        ->default(1)
+                        ->live()
+                        ->required()
+                        ->columnSpan(1),
+
+                    Forms\Components\Toggle::make('send_welcome')
+                        ->label('¿Enviar accesos al correo del usuario?')
+                        ->default(true)
+                        ->helperText('Si activas esta opción, se enviará al correo el email y la contraseña final asignada.')
+                        ->columnSpan(1),
+
+                    Forms\Components\TextInput::make('password_plain')
+                        ->label('Contraseña manual')
+                        ->password()
+                        ->revealable()
+                        ->minLength(8)
+                        ->maxLength(255)
+                        ->placeholder('Mínimo 8 caracteres')
+                        ->visible(fn (Forms\Get $get): bool => (string) $get('auto_password') === '0')
+                        ->required(fn (Forms\Get $get): bool => (string) $get('auto_password') === '0')
+                        ->same('password_plain_confirmation')
+                        ->helperText('Esta será la contraseña que se guardará y, si activaste el envío, también la que se mandará por correo.')
+                        ->columnSpan(1),
+
+                    Forms\Components\TextInput::make('password_plain_confirmation')
+                        ->label('Confirmar contraseña')
+                        ->password()
+                        ->revealable()
+                        ->minLength(8)
+                        ->maxLength(255)
+                        ->placeholder('Repite la contraseña')
+                        ->visible(fn (Forms\Get $get): bool => (string) $get('auto_password') === '0')
+                        ->required(fn (Forms\Get $get): bool => (string) $get('auto_password') === '0')
+                        ->columnSpan(1),
                 ]),
         ]);
     }
@@ -133,8 +181,6 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()->label('Editar'),
             ])
-
-            // ✅ AQUÍ es donde se habilitan los CHECKS (selección)
             ->bulkActions([
                 BulkActionGroup::make([
                     BulkAction::make('grantAccessSelected')
@@ -143,7 +189,7 @@ class UserResource extends Resource
                         ->color('success')
                         ->requiresConfirmation()
                         ->modalHeading('Dar acceso a usuarios seleccionados')
-                        ->modalDescription('Se habilitará el acceso SOLO a los seleccionados que estén "Sin acceso".')
+                        ->modalDescription('Se habilitará el acceso solo a los seleccionados que estén sin acceso.')
                         ->action(function (Collection $records): void {
                             try {
                                 $targets = $records
@@ -191,7 +237,7 @@ class UserResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Quitar acceso a usuarios seleccionados')
-                        ->modalDescription('Se deshabilitará el acceso SOLO a los seleccionados que estén "Con acceso".')
+                        ->modalDescription('Se deshabilitará el acceso solo a los seleccionados que estén con acceso.')
                         ->action(function (Collection $records): void {
                             try {
                                 $targets = $records
@@ -238,7 +284,7 @@ class UserResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Eliminar usuarios seleccionados')
-                        ->modalDescription('Esto eliminará definitivamente a los usuarios seleccionados (solo manual/excel).')
+                        ->modalDescription('Esto eliminará definitivamente a los usuarios seleccionados, solo manual/excel.')
                         ->action(function (Collection $records): void {
                             try {
                                 $targets = $records
