@@ -28,24 +28,30 @@ class AdminEnarmPanelProvider extends PanelProvider
             ->id('admin_enarm')
             ->path('admin_enarm')
             ->login()
-
+            ->brandName('ENARM CCM')
             ->colors([
-                'primary' => Color::hex('#990017'), // rojo
+                'primary' => Color::hex('#990017'),
             ])
-
             ->assets([
                 Css::make('admin-enarm-theme', asset('css/admin_enarm_theme.css')),
             ])
-
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(
+                in: app_path('Filament/Resources'),
+                for: 'App\\Filament\\Resources'
+            )
+            ->discoverPages(
+                in: app_path('Filament/Pages'),
+                for: 'App\\Filament\\Pages'
+            )
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Widgets'),
+                for: 'App\\Filament\\Widgets'
+            )
             ->widgets([
                 Widgets\AccountWidget::class,
-                //Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

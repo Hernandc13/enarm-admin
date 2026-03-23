@@ -30,6 +30,6 @@ class UserSimulatorStat extends Model
 
     public function simulator(): BelongsTo
     {
-        return $this->belongsTo(Simulator::class);
+        return $this->belongsTo(Simulator::class, 'simulator_id');
     }
 }

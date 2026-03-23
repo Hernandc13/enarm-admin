@@ -10,62 +10,75 @@ use Illuminate\Support\Str;
 class QuestionIdGenerator
 {
     /**
-     * Genera IDs tipo Moodle:
-     * PREFIX_0001, PREFIX_0002...
+     * Genera IDs por especialidad tipo:
+     * CARDIO_0001, MI_0002, GINECO_0003, etc.
      *
-     * PREFIX:
-     * - Si la especialidad tiene 2+ palabras: iniciales (ej. "Medicina Interna" => MI)
-     * - Si es 1 palabra: primeras 6 letras del slug (ej. "Cardiología" => CARDIO* aprox)
+     * Este será el método principal para preguntas creadas manualmente
+     * o importadas sin ID.
+     */
+    public function generate(Specialty $specialty): string
+    {
+        return $this->generateForSpecialty($specialty);
+    }
+
+    /**
+     * Compatibilidad con flujos anteriores.
      */
     public function generateForSpecialty(Specialty $specialty): string
     {
         $prefix = $this->makePrefix($specialty->name);
 
-        // Para evitar condiciones de carrera, lo hacemos dentro de transacción y lock.
         return DB::transaction(function () use ($specialty, $prefix) {
-
-            // Tomamos los últimos IDs de esa especialidad con ese prefijo
-            $last = Question::query()
+            $lastGiftId = Question::query()
                 ->where('specialty_id', $specialty->id)
                 ->where('gift_id', 'like', $prefix . '\_%')
-                ->orderByDesc('id') // suficiente porque siempre generamos secuencialmente
+                ->orderByDesc('id')
                 ->value('gift_id');
 
             $nextNumber = 1;
 
-            if ($last) {
-                // Espera formato PREFIX_#### (o más dígitos)
-                $parts = explode('_', $last);
-                $n = intval(end($parts));
-                if ($n > 0) $nextNumber = $n + 1;
+            if ($lastGiftId && preg_match('/^' . preg_quote($prefix, '/') . '_(\d+)$/', $lastGiftId, $matches)) {
+                $lastNumber = (int) $matches[1];
+
+                if ($lastNumber > 0) {
+                    $nextNumber = $lastNumber + 1;
+                }
             }
 
-            $pad = $nextNumber <= 9999 ? 4 : strlen((string) $nextNumber);
+            $padLength = max(4, strlen((string) $nextNumber));
 
-            return $prefix . '_' . str_pad((string) $nextNumber, $pad, '0', STR_PAD_LEFT);
+            return $prefix . '_' . str_pad((string) $nextNumber, $padLength, '0', STR_PAD_LEFT);
         });
     }
 
+    /**
+     * Genera prefijo según la especialidad.
+     *
+     * Reglas:
+     * - Si tiene 2 o más palabras: usar iniciales. Ej: Medicina Interna => MI
+     * - Si tiene 1 palabra: usar slug limpio y hasta 6 caracteres. Ej: Cardiología => CARDIO
+     */
     private function makePrefix(string $name): string
     {
-        $name = trim(preg_replace('/\s+/', ' ', $name));
-
-        $words = preg_split('/\s+/', $name);
+        $name = trim((string) preg_replace('/\s+/', ' ', $name));
+        $words = preg_split('/\s+/', $name) ?: [];
 
         if (count($words) >= 2) {
-            // Iniciales
             $initials = '';
-            foreach ($words as $w) {
-                $w = trim($w);
-                if ($w === '') continue;
-                $initials .= mb_strtoupper(mb_substr($w, 0, 1));
+
+            foreach ($words as $word) {
+                $word = trim($word);
+
+                if ($word === '') {
+                    continue;
+                }
+
+                $initials .= mb_strtoupper(mb_substr($word, 0, 1));
             }
 
-            // Máximo 6 caracteres
-            return mb_substr($initials, 0, 6);
+            return mb_substr($initials, 0, 6) ?: 'Q';
         }
 
-        // Una palabra: usar slug sin guiones, primeras 6 letras
         $slug = Str::slug($name);
         $slug = strtoupper(str_replace('-', '', $slug));
 

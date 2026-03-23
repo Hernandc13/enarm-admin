@@ -20,15 +20,30 @@ class SimulatorAttemptController extends Controller
         $user = $request->user();
         $now  = Carbon::now();
 
-        if (!(bool) $simulator->is_published || ! $simulator->isAvailableNow()) {
+        if (!(bool) $user->has_app_access || !empty($user->revoked_at)) {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json([
+                'ok' => false,
+                'reason' => 'NO_APP_ACCESS',
+                'message' => 'Tu acceso a la app está desactivado.',
+            ], 403);
+        }
+
+        $simulator->load('category:id,name,description,is_active,sort_order');
+
+        if (
+            !(bool) $simulator->is_published ||
+            !$simulator->isAvailableNow() ||
+            !$simulator->category ||
+            !(bool) $simulator->category->is_active
+        ) {
             return response()->json([
                 'ok'      => false,
                 'message' => 'Simulador no disponible.',
             ], 404);
         }
 
-        // ✅ Límite de intentos
-        // abandoned NO cuenta como intento consumido
         if (!is_null($simulator->max_attempts)) {
             $count = SimulatorAttempt::where('user_id', $user->id)
                 ->where('simulator_id', $simulator->id)
@@ -43,7 +58,6 @@ class SimulatorAttemptController extends Controller
             }
         }
 
-        // Obtener preguntas respetando pivot order si NO se baraja
         $qQuery = $simulator->questions()->select('questions.id');
 
         if (!(bool) $simulator->shuffle_questions) {
@@ -97,8 +111,15 @@ class SimulatorAttemptController extends Controller
         return response()->json([
             'ok'   => true,
             'data' => [
-                'attempt_id'      => $attempt->id,
-                'simulator_id'    => $simulator->id,
+                'attempt_id'      => (int) $attempt->id,
+                'simulator_id'    => (int) $simulator->id,
+                'category_id'     => (int) $simulator->category_id,
+                'category'        => $simulator->category ? [
+                    'id' => (int) $simulator->category->id,
+                    'name' => (string) $simulator->category->name,
+                    'description' => $simulator->category->description,
+                    'sort_order' => (int) $simulator->category->sort_order,
+                ] : null,
                 'mode'            => $simulator->mode ?? Simulator::MODE_EXAM,
                 'started_at'      => optional($attempt->started_at)->toIso8601String(),
                 'expires_at'      => optional($attempt->expires_at)->toIso8601String(),
@@ -110,6 +131,16 @@ class SimulatorAttemptController extends Controller
     public function questions(Request $request, SimulatorAttempt $attempt)
     {
         $user = $request->user();
+
+        if (!(bool) $user->has_app_access || !empty($user->revoked_at)) {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json([
+                'ok' => false,
+                'reason' => 'NO_APP_ACCESS',
+                'message' => 'Tu acceso a la app está desactivado.',
+            ], 403);
+        }
 
         if ((int) $attempt->user_id !== (int) $user->id) {
             return response()->json([
@@ -126,7 +157,6 @@ class SimulatorAttemptController extends Controller
         }
 
         if (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at)) {
-            // ✅ expira, pero luego finish() todavía puede cerrarlo/calificarlo
             $attempt->update([
                 'status' => 'expired',
                 'finished_at' => now(),
@@ -141,7 +171,7 @@ class SimulatorAttemptController extends Controller
         $limit = (int) ($request->query('limit', 10));
         $limit = max(1, min(25, $limit));
 
-        $attempt->load('simulator');
+        $attempt->load('simulator.category');
 
         $paginator = $attempt->attemptQuestions()
             ->with(['question'])
@@ -227,6 +257,8 @@ class SimulatorAttemptController extends Controller
                 'total'          => $paginator->total(),
                 'expires_at'     => optional($attempt->expires_at)->toIso8601String(),
                 'simulator_mode' => $attempt->simulator?->mode ?? Simulator::MODE_EXAM,
+                'category_id'    => (int) ($attempt->simulator?->category_id ?? 0),
+                'category_name'  => (string) ($attempt->simulator?->category?->name ?? ''),
             ],
         ]);
     }
@@ -234,6 +266,16 @@ class SimulatorAttemptController extends Controller
     public function answer(Request $request, SimulatorAttempt $attempt)
     {
         $user = $request->user();
+
+        if (!(bool) $user->has_app_access || !empty($user->revoked_at)) {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json([
+                'ok' => false,
+                'reason' => 'NO_APP_ACCESS',
+                'message' => 'Tu acceso a la app está desactivado.',
+            ], 403);
+        }
 
         if ((int) $attempt->user_id !== (int) $user->id) {
             return response()->json([
@@ -317,10 +359,19 @@ class SimulatorAttemptController extends Controller
         ]);
     }
 
-    // ✅ NUEVO MÉTODO: abandonar intento sin finalizar
     public function abandon(Request $request, SimulatorAttempt $attempt)
     {
         $user = $request->user();
+
+        if (!(bool) $user->has_app_access || !empty($user->revoked_at)) {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json([
+                'ok' => false,
+                'reason' => 'NO_APP_ACCESS',
+                'message' => 'Tu acceso a la app está desactivado.',
+            ], 403);
+        }
 
         if ((int) $attempt->user_id !== (int) $user->id) {
             return response()->json([
@@ -329,7 +380,6 @@ class SimulatorAttemptController extends Controller
             ], 403);
         }
 
-        // Si ya está cerrado, ya no se puede abandonar
         if (in_array($attempt->status, ['finished', 'abandoned'], true)) {
             return response()->json([
                 'ok' => false,
@@ -337,8 +387,6 @@ class SimulatorAttemptController extends Controller
             ], 422);
         }
 
-        // Si estaba vencido también lo marcamos como abandonado solo si
-        // el usuario salió voluntariamente antes de finalizar desde app.
         $attempt->update([
             'status' => 'abandoned',
             'finished_at' => now(),
@@ -347,7 +395,7 @@ class SimulatorAttemptController extends Controller
         return response()->json([
             'ok'   => true,
             'data' => [
-                'attempt_id' => $attempt->id,
+                'attempt_id' => (int) $attempt->id,
                 'status'     => 'abandoned',
                 'finished_at'=> optional($attempt->finished_at)->toIso8601String(),
             ],
@@ -359,6 +407,16 @@ class SimulatorAttemptController extends Controller
     {
         $user = $request->user();
 
+        if (!(bool) $user->has_app_access || !empty($user->revoked_at)) {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json([
+                'ok' => false,
+                'reason' => 'NO_APP_ACCESS',
+                'message' => 'Tu acceso a la app está desactivado.',
+            ], 403);
+        }
+
         if ((int) $attempt->user_id !== (int) $user->id) {
             return response()->json([
                 'ok' => false,
@@ -366,7 +424,6 @@ class SimulatorAttemptController extends Controller
             ], 403);
         }
 
-        // ✅ Acepta in_progress o expired
         if (!in_array($attempt->status, ['in_progress', 'expired'], true)) {
             return response()->json([
                 'ok' => false,
@@ -374,7 +431,7 @@ class SimulatorAttemptController extends Controller
             ], 422);
         }
 
-        $attempt->load('simulator');
+        $attempt->load('simulator.category');
 
         $timedOut = (!is_null($attempt->expires_at) && now()->greaterThan($attempt->expires_at));
 
@@ -382,7 +439,6 @@ class SimulatorAttemptController extends Controller
             $attempt->status = 'expired';
         }
 
-        // ✅ marcar como incorrectas las no contestadas
         $answeredIds = $attempt->answers()->pluck('question_id')->all();
 
         $missing = $attempt->attemptQuestions()
@@ -425,7 +481,10 @@ class SimulatorAttemptController extends Controller
         return response()->json([
             'ok'   => true,
             'data' => [
-                'attempt_id'        => $attempt->id,
+                'attempt_id'        => (int) $attempt->id,
+                'simulator_id'      => (int) $attempt->simulator_id,
+                'category_id'       => (int) ($attempt->simulator?->category_id ?? 0),
+                'category_name'     => (string) ($attempt->simulator?->category?->name ?? ''),
                 'simulator_mode'    => $attempt->simulator?->mode ?? Simulator::MODE_EXAM,
                 'total_questions'   => $total,
                 'correct_count'     => $correct,

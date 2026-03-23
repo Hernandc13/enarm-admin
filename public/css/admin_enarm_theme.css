@@ -1,134 +1,331 @@
-/* ENARM CCM - Theme (Login scoped) */
+/* =========================================================
+   ENARM CCM - LOGIN AJUSTADO
+   ========================================================= */
+
 :root{
   --enarm-red: #990017;
   --enarm-blue: #012e82;
+  --enarm-text: #111827;
+  --enarm-input-border: rgba(1, 46, 130, 0.22);
+  --enarm-input-border-hover: rgba(1, 46, 130, 0.35);
+  --enarm-input-border-focus: #012e82;
+  --enarm-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
 }
 
-/* =========================
-   LOGIN ONLY (.fi-simple-layout)
-   ========================= */
+/* =========================================================
+   LOGIN PAGE
+   ========================================================= */
 
-/* Fondo página login */
 .fi-simple-layout{
+  min-height: 100vh !important;
+  position: relative !important;
+  background:
+    linear-gradient(rgba(255,255,255,.38), rgba(255,255,255,.38)),
+    url('/images/fondo_login.png') center center / cover no-repeat !important;
+}
+
+.fi-simple-layout::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(1,46,130,.04), rgba(153,0,23,.03));
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Área principal */
+.fi-simple-layout .fi-simple-main{
+  min-height: 100vh !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 28px 16px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Contenedor externo sin bordes fantasmas */
+.fi-simple-layout .fi-simple-main-ctn,
+.fi-simple-layout .fi-simple-main-ctn > div,
+.fi-simple-layout .fi-simple-main-ctn::before,
+.fi-simple-layout .fi-simple-main-ctn::after{
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.fi-simple-layout .fi-simple-main-ctn{
+  width: 100% !important;
+  max-width: 540px !important;
+  margin: 0 auto !important;
+}
+
+/* Card real del login */
+.fi-simple-layout .fi-simple-page{
+  width: 100% !important;
+  background: rgba(255,255,255,.92) !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 30px !important;
+  box-shadow: var(--enarm-shadow) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  overflow: hidden !important;
+  padding: 34px 32px 28px 32px !important;
+  position: relative !important;
+}
+
+/* Elimina bordes internos extra, pero sin romper inputs ni botón */
+.fi-simple-layout .fi-simple-page > div:not(form),
+.fi-simple-layout .fi-simple-page .fi-section,
+.fi-simple-layout .fi-simple-page .fi-card,
+.fi-simple-layout .fi-simple-page .fi-panel{
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Header */
+.fi-simple-layout .fi-simple-header{
+  margin: 0 0 18px 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+}
+
+/* Título ENARM CCM azul */
+.fi-simple-layout .fi-simple-header-heading,
+.fi-simple-layout .fi-logo + div,
+.fi-simple-layout [class*="fi-simple-header"] h1,
+.fi-simple-layout [class*="fi-simple-header"] h2{
+  display: block !important;
+  margin: 0 0 14px 0 !important;
+  color: var(--enarm-blue) !important;
+  text-align: center !important;
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .2px !important;
+}
+
+/* Logo */
+.fi-simple-layout .fi-logo,
+.fi-simple-layout .fi-simple-header .fi-logo,
+.fi-simple-layout .fi-simple-header img{
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 155px !important;
+  max-height: 155px !important;
+  margin: 0 auto 14px auto !important;
+  object-fit: contain !important;
+}
+
+/* Subtítulo */
+.fi-simple-layout .fi-simple-header-subheading{
+  margin: 6px 0 0 0 !important;
+  color: var(--enarm-blue) !important;
+  text-align: center !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+}
+
+/* Labels */
+.fi-simple-layout .fi-fo-field-wrp-label,
+.fi-simple-layout .fi-fo-field-wrp-label span,
+.fi-simple-layout .fi-checkbox-label{
+  color: var(--enarm-blue) !important;
+  font-weight: 700 !important;
+  font-size: .95rem !important;
+}
+
+/* Form */
+.fi-simple-layout form{
+  margin-top: 4px !important;
+}
+
+.fi-simple-layout .fi-fo-component-ctn{
+  gap: 16px !important;
+}
+
+/* Inputs definidos con borde azul tenue */
+.fi-simple-layout .fi-input-wrp{
+  border-radius: 14px !important;
+  border: 1px solid var(--enarm-input-border) !important;
+  background: rgba(245, 248, 255, 0.96) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  transition: all .2s ease !important;
+}
+
+.fi-simple-layout .fi-input-wrp:hover{
+  border-color: var(--enarm-input-border-hover) !important;
   background: #ffffff !important;
 }
 
-/* Título y subtítulo SOLO login */
-.fi-simple-layout .fi-simple-header-heading,
-.fi-simple-layout .fi-simple-header-subheading{
-  color: var(--enarm-blue) !important;
-}
-
-/* Labels SOLO login */
-.fi-simple-layout .fi-fo-field-wrp-label,
-.fi-simple-layout .fi-fo-field-wrp-label span{
-  color: var(--enarm-blue) !important;
-  font-weight: 600 !important;
-}
-
-/* Texto general SOLO login (si te pinta algo raro, comenta la regla con *) */
-.fi-simple-layout .fi-simple-main{
-  color: var(--enarm-blue) !important;
-}
-
-/* * Esto pinta TODO azul dentro del card del login */
-.fi-simple-layout .fi-simple-main *{
-  color: var(--enarm-blue) !important;
-}
-
-/* Inputs: texto oscuro SOLO login */
-.fi-simple-layout .fi-input,
-.fi-simple-layout .fi-input *{
-  color: #111827 !important;
-}
-
-/* Focus azul SOLO login */
-.fi-simple-layout .fi-input:focus,
 .fi-simple-layout .fi-input-wrp:focus-within{
-  border-color: var(--enarm-blue) !important;
-  box-shadow: 0 0 0 3px rgba(1,46,130,.18) !important;
+  background: #ffffff !important;
+  border-color: var(--enarm-input-border-focus) !important;
+  box-shadow: 0 0 0 4px rgba(1,46,130,.10) !important;
 }
 
-/* Links SOLO login (IMPORTANTE: ya no es global) */
-.fi-simple-layout .fi-link,
-.fi-simple-layout .fi-link a,
-.fi-simple-layout a{
-  color: var(--enarm-blue) !important;
-}
-
-/* Card principal del login: borde + radius SOLO login */
-.fi-simple-layout .fi-simple-main{
-  border: 1px solid #111827 !important;
-  border-radius: 16px !important;
-}
-
-/* Si hay wrappers internos */
-.fi-simple-layout .fi-simple-main .fi-section,
-.fi-simple-layout .fi-simple-main .fi-card,
-.fi-simple-layout .fi-simple-main .fi-panel{
+.fi-simple-layout .fi-input,
+.fi-simple-layout input,
+.fi-simple-layout textarea,
+.fi-simple-layout select{
+  min-height: 48px !important;
+  color: var(--enarm-text) !important;
   background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: .98rem !important;
 }
 
-/* Botón SOLO login: rojo + texto blanco */
-.fi-simple-layout .fi-btn-color-primary{
-  background-color: var(--enarm-red) !important;
-  border-color: var(--enarm-red) !important;
+.fi-simple-layout input::placeholder,
+.fi-simple-layout textarea::placeholder{
+  color: #94a3b8 !important;
+}
+
+.fi-simple-layout .fi-input-wrp .fi-icon{
+  color: var(--enarm-blue) !important;
+  opacity: .85 !important;
+}
+
+/* Checkbox */
+.fi-simple-layout input[type="checkbox"]{
+  accent-color: var(--enarm-red);
+}
+
+/* Links */
+.fi-simple-layout a,
+.fi-simple-layout .fi-link,
+.fi-simple-layout .fi-link a{
+  color: var(--enarm-blue) !important;
+  text-decoration: none !important;
+}
+
+/* Botón de iniciar sesión visible */
+.fi-simple-layout .fi-btn-color-primary,
+.fi-simple-layout button[type="submit"]{
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 0 18px !important;
+  border-radius: 14px !important;
+  border: none !important;
+  outline: none !important;
+  background: linear-gradient(135deg, #aa001d 0%, #990017 100%) !important;
+  box-shadow: 0 12px 26px rgba(153,0,23,.24) !important;
+  transition: all .18s ease !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.fi-simple-layout .fi-btn-color-primary:hover,
+.fi-simple-layout button[type="submit"]:hover{
+  transform: translateY(-1px) !important;
+  box-shadow: 0 14px 30px rgba(153,0,23,.28) !important;
+  filter: brightness(.98) !important;
 }
 
 .fi-simple-layout .fi-btn.fi-btn-color-primary,
-.fi-simple-layout .fi-btn.fi-btn-color-primary *{
-  color: #ffffff !important;
-}
-
-/* Por si login usa submit sin clases */
+.fi-simple-layout .fi-btn.fi-btn-color-primary *,
 .fi-simple-layout button[type="submit"],
-.fi-simple-layout button[type="submit"] *{
+.fi-simple-layout button[type="submit"] *,
+.fi-simple-layout .fi-btn-label{
   color: #ffffff !important;
+  fill: #ffffff !important;
+  font-weight: 800 !important;
+  letter-spacing: .2px !important;
+  opacity: 1 !important;
 }
 
-/* Ajustes opcionales del header (si aún usas spacing del logo) */
-.fi-simple-layout .fi-simple-header{
-  padding-bottom: 12px !important;
+/* Evita basura visual */
+.fi-simple-layout img{
+  overflow: hidden !important;
 }
 
-/* Si tu subheading lo bajaste por el logo (solo login) */
-.fi-simple-layout .fi-simple-header-subheading{
-  margin-top: 92px !important;
-}
+/* =========================================================
+   PANEL LOGUEADO
+   ========================================================= */
 
-/* =========================
-   PANEL LOGUEADO (NO LOGIN)
-   ========================= */
-
-/* NO fuerces links azules fuera del login */
 .fi:not(.fi-simple-layout) a{
   color: inherit !important;
 }
 
-/* Botones primarios del panel: texto blanco (ej. Crear Usuario, Importar Excel, etc.) */
-.fi:not(.fi-simple-layout) .fi-page-header .fi-btn.fi-btn-color-primary,
-.fi:not(.fi-simple-layout) .fi-page-header .fi-btn.fi-btn-color-primary *{
-  color: #ffffff !important;
-}
-/* ===== BOTÓN SOLO EN LOGIN (no afecta al dashboard) ===== */
-.fi-simple-layout .fi-btn-color-primary{
-  background-color: var(--enarm-red) !important;
-  border-color: var(--enarm-red) !important;
-}
-
-.fi-simple-layout .fi-btn.fi-btn-color-primary,
-.fi-simple-layout .fi-btn.fi-btn-color-primary *{
-  color: #ffffff !important;
-}
-
-/* Por si en login el submit no trae la clase esperada */
-.fi-simple-layout button[type="submit"],
-.fi-simple-layout button[type="submit"] *{
-  color: #ffffff !important;
-}
-/* ===== PANEL (NO LOGIN): botón "Crear Usuario" texto blanco ===== */
-/* Aplica a botones primarios del panel (header actions) */
 .fi:not(.fi-simple-layout) .fi-btn.fi-btn-color-primary,
 .fi:not(.fi-simple-layout) .fi-btn.fi-btn-color-primary *{
   color: #ffffff !important;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px){
+  .fi-simple-layout .fi-simple-main{
+    padding: 22px 12px !important;
+  }
+
+  .fi-simple-layout .fi-simple-page{
+    border-radius: 24px !important;
+    padding: 26px 20px 22px 20px !important;
+  }
+
+  .fi-simple-layout .fi-logo,
+  .fi-simple-layout .fi-simple-header .fi-logo,
+  .fi-simple-layout .fi-simple-header img{
+    max-width: 125px !important;
+    max-height: 125px !important;
+  }
+
+  .fi-simple-layout .fi-simple-header-heading,
+  .fi-simple-layout .fi-logo + div,
+  .fi-simple-layout [class*="fi-simple-header"] h1,
+  .fi-simple-layout [class*="fi-simple-header"] h2{
+    font-size: 1.7rem !important;
+  }
+
+  .fi-simple-layout .fi-simple-header-subheading{
+    font-size: .98rem !important;
+  }
+}
+
+/* Texto de marca en login */
+.fi-simple-layout .fi-logo,
+.fi-simple-layout .fi-logo span,
+.fi-simple-layout .fi-logo div,
+.fi-simple-layout .fi-simple-header .fi-logo,
+.fi-simple-layout .fi-simple-header .fi-logo span,
+.fi-simple-layout .fi-simple-header .fi-logo div,
+.fi-simple-layout .fi-simple-main .fi-logo,
+.fi-simple-layout .fi-simple-main .fi-logo span,
+.fi-simple-layout .fi-simple-main .fi-logo div,
+.fi-simple-layout [class*="brand"] ,
+.fi-simple-layout [class*="brand"] span,
+.fi-simple-layout [class*="brand"] div,
+.fi-simple-layout h1,
+.fi-simple-layout h2{
+    color: var(--enarm-blue) !important;
+    -webkit-text-fill-color: var(--enarm-blue) !important;
+}
+
+/* Por si Filament lo pinta como texto del logo */
+.fi-simple-layout .fi-logo{
+    color: var(--enarm-blue) !important;
+    fill: var(--enarm-blue) !important;
+}
+
+/* Si el texto de marca aparece como span dentro del logo */
+.fi-simple-layout .fi-logo span{
+    color: var(--enarm-blue) !important;
+    font-weight: 800 !important;
 }

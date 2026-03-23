@@ -15,9 +15,9 @@ class SpecialtyResource extends Resource
     protected static ?string $model = Specialty::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationLabel = 'Especialidades';
+    protected static ?string $navigationLabel = 'Categorías del Banco';
     protected static ?string $modelLabel = 'Especialidad';
-    protected static ?string $pluralModelLabel = 'Especialidades';
+    protected static ?string $pluralModelLabel = 'Categorías del Banco';
 
     public static function form(Form $form): Form
     {

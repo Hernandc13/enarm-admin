@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SimulatorResource\Pages;
 use App\Models\Simulator;
+use App\Models\SimulatorCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -18,16 +19,51 @@ class SimulatorResource extends Resource
     protected static ?string $navigationLabel = 'Simuladores';
     protected static ?string $modelLabel = 'Simulador';
     protected static ?string $pluralModelLabel = 'Simuladores';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Forms\Components\Select::make('category_id')
+                ->label('Categoría')
+                ->relationship(
+                    name: 'category',
+                    titleAttribute: 'name',
+                    modifyQueryUsing: fn ($query) => $query->where('is_active', true)->orderBy('sort_order')->orderBy('name')
+                )
+                ->searchable()
+                ->preload()
+                ->required()
+                ->native(false)
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Nombre')
+                        ->required()
+                        ->maxLength(255),
+
+                    Forms\Components\Textarea::make('description')
+                        ->label('Descripción')
+                        ->rows(3),
+
+                    Forms\Components\TextInput::make('sort_order')
+                        ->label('Orden')
+                        ->numeric()
+                        ->default(0),
+
+                    Forms\Components\Toggle::make('is_active')
+                        ->label('Activa')
+                        ->default(true),
+                ])
+                ->createOptionUsing(function (array $data): int {
+                    return SimulatorCategory::create($data)->id;
+                })
+                ->helperText('Selecciona la categoría a la que pertenece este simulador.'),
+
             Forms\Components\TextInput::make('name')
                 ->label('Nombre del simulador')
                 ->required()
                 ->maxLength(255),
 
-            // ✅ NUEVO: tipo de simulador
             Forms\Components\Select::make('mode')
                 ->label('Tipo de simulador')
                 ->required()
@@ -68,20 +104,15 @@ class SimulatorResource extends Resource
                         ->label('Barajar opciones')
                         ->default(true),
 
-                    // ==========================
-                    // Intentos máximos (con checkbox)
-                    // ==========================
                     Forms\Components\Grid::make(12)->schema([
                         Forms\Components\Toggle::make('max_attempts_unlimited')
                             ->label('Ilimitados')
                             ->default(true)
                             ->reactive()
                             ->afterStateHydrated(function (Forms\Components\Toggle $component, $state, callable $set, callable $get) {
-                                // Si en BD max_attempts es NULL => ilimitados
                                 $set('max_attempts_unlimited', $get('max_attempts') === null);
                             })
                             ->afterStateUpdated(function ($state, callable $set) {
-                                // Si marca ilimitados, limpiamos el valor real
                                 if ($state) {
                                     $set('max_attempts', null);
                                 }
@@ -96,22 +127,19 @@ class SimulatorResource extends Resource
                             ->disabled(fn (callable $get) => (bool) $get('max_attempts_unlimited'))
                             ->dehydrated(true)
                             ->dehydrateStateUsing(function ($state, callable $get) {
-                                // Si ilimitados => NULL
                                 if ((bool) $get('max_attempts_unlimited')) {
                                     return null;
                                 }
+
                                 if ($state === null || $state === '') {
                                     return null;
                                 }
+
                                 return (int) $state;
                             })
                             ->columnSpan(9),
                     ]),
 
-                    // ==========================
-                    // Límite de tiempo (minutos) con checkbox "Sin límite"
-                    // Guardado en seconds (time_limit_seconds)
-                    // ==========================
                     Forms\Components\Grid::make(12)->schema([
                         Forms\Components\Toggle::make('time_limit_unlimited')
                             ->label('Sin límite')
@@ -139,31 +167,26 @@ class SimulatorResource extends Resource
                                 $seconds = $get('time_limit_seconds');
                                 $set('time_limit_minutes', $seconds ? (int) round(((int) $seconds) / 60) : null);
                             })
-                            ->dehydrated(true)
-                            ->dehydrateStateUsing(function ($state, callable $get) {
-                                // Este campo NO existe en BD, pero lo dejamos igual (no se guarda)
-                                return $state;
-                            })
+                            ->dehydrated(false)
                             ->columnSpan(9),
 
-                        // Hidden real field in seconds (persisted)
                         Forms\Components\Hidden::make('time_limit_seconds')
                             ->dehydrated(true)
                             ->dehydrateStateUsing(function ($state, callable $get) {
                                 if ((bool) $get('time_limit_unlimited')) {
                                     return null;
                                 }
+
                                 $mins = $get('time_limit_minutes');
+
                                 if ($mins === null || $mins === '') {
                                     return null;
                                 }
+
                                 return (int) $mins * 60;
                             }),
                     ]),
 
-                    // ==========================
-                    // Calificación mínima (0–100) con checkbox "Sin mínima"
-                    // ==========================
                     Forms\Components\Grid::make(12)->schema([
                         Forms\Components\Toggle::make('min_score_none')
                             ->label('Sin mínima')
@@ -191,9 +214,11 @@ class SimulatorResource extends Resource
                                 if ((bool) $get('min_score_none')) {
                                     return null;
                                 }
+
                                 if ($state === null || $state === '') {
                                     return null;
                                 }
+
                                 return (int) $state;
                             })
                             ->columnSpan(9),
@@ -205,14 +230,20 @@ class SimulatorResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->query(Simulator::query()->withCount('questions'))
+            ->query(Simulator::query()->with(['category'])->withCount('questions'))
             ->columns([
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Categoría')
+                    ->badge()
+                    ->color('info')
+                    ->searchable()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Simulador')
                     ->searchable()
                     ->sortable(),
 
-                // ✅ NUEVO: badge del tipo
                 Tables\Columns\BadgeColumn::make('mode')
                     ->label('Tipo')
                     ->formatStateUsing(fn (?string $state) => match ($state) {
@@ -220,6 +251,10 @@ class SimulatorResource extends Resource
                         Simulator::MODE_EXAM  => 'Modo examen',
                         default               => $state ?: '—',
                     })
+                    ->colors([
+                        'success' => Simulator::MODE_STUDY,
+                        'danger'  => Simulator::MODE_EXAM,
+                    ])
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_published')
@@ -242,10 +277,14 @@ class SimulatorResource extends Resource
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Actualizado')
-                    ->dateTime(),
+                    ->dateTime()
+                    ->sortable(),
             ])
-            // ✅ NUEVO: filtro por tipo
             ->filters([
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->label('Categoría')
+                    ->relationship('category', 'name'),
+
                 Tables\Filters\SelectFilter::make('mode')
                     ->label('Tipo')
                     ->options([

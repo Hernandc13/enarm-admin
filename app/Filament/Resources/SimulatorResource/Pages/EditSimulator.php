@@ -11,6 +11,6 @@ class EditSimulator extends EditRecord
 
     protected function getRedirectUrl(): string
     {
-        return SimulatorResource::getUrl('index'); // ✅ vuelve al listado
+        return SimulatorResource::getUrl('index');
     }
 }

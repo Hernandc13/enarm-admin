@@ -12,7 +12,6 @@ class EditQuestion extends EditRecord
 {
     protected static string $resource = QuestionResource::class;
 
-    // ✅ Al guardar, volver al listado
     protected function getRedirectUrl(): string
     {
         return QuestionResource::getUrl('index');
@@ -46,15 +45,14 @@ class EditQuestion extends EditRecord
     {
         /** @var Question $record */
         return DB::transaction(function () use ($record, $data) {
-
-            // ✅ Blindaje: aunque alguien manipule el request, NO se actualiza gift_id en edición
+            // Blindaje: no permitir cambiar gift_id desde edición
             unset($data['gift_id']);
 
-            $optionA = $data['option_a'];
-            $optionB = $data['option_b'];
-            $optionC = $data['option_c'];
-            $optionD = $data['option_d'];
-            $correct = $data['correct_option'];
+            $optionA = trim((string) $data['option_a']);
+            $optionB = trim((string) $data['option_b']);
+            $optionC = trim((string) $data['option_c']);
+            $optionD = trim((string) $data['option_d']);
+            $correct = (string) $data['correct_option'];
 
             unset(
                 $data['option_a'],
@@ -64,23 +62,45 @@ class EditQuestion extends EditRecord
                 $data['correct_option']
             );
 
+            $data['general_feedback'] = trim((string) ($data['general_feedback'] ?? ''));
+
             $data['content_hash'] = hash(
                 'sha256',
-                $data['specialty_id'] . '|' . $data['stem'] . '|' . $optionA . '|' . $optionB . '|' . $optionC . '|' . $optionD . '|' . $correct . '|' . $data['reference']
+                $data['specialty_id'] . '|' .
+                trim((string) $data['stem']) . '|' .
+                $optionA . '|' .
+                $optionB . '|' .
+                $optionC . '|' .
+                $optionD . '|' .
+                $correct . '|' .
+                $data['general_feedback']
             );
 
             $record->update($data);
 
-            // Reemplazar opciones (A–D) siempre
             $record->options()->delete();
-            $this->saveOptions($record->id, $optionA, $optionB, $optionC, $optionD, $correct);
+
+            $this->saveOptions(
+                questionId: $record->id,
+                a: $optionA,
+                b: $optionB,
+                c: $optionC,
+                d: $optionD,
+                correct: $correct
+            );
 
             return $record;
         });
     }
 
-    private function saveOptions(int $questionId, string $a, string $b, string $c, string $d, string $correct): void
-    {
+    private function saveOptions(
+        int $questionId,
+        string $a,
+        string $b,
+        string $c,
+        string $d,
+        string $correct
+    ): void {
         $map = [
             1 => ['key' => 'A', 'text' => $a],
             2 => ['key' => 'B', 'text' => $b],

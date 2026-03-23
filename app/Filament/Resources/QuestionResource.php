@@ -10,7 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class QuestionResource extends Resource
 {
@@ -30,15 +29,22 @@ class QuestionResource extends Resource
                 ->searchable()
                 ->required(),
 
+            Forms\Components\TextInput::make('gift_id')
+                ->label('ID de pregunta')
+                ->maxLength(255)
+                ->helperText('Ejemplo: Pregunta1, Pregunta2, Cardio15')
+                ->nullable(),
+
             Forms\Components\Textarea::make('stem')
                 ->label('Enunciado')
                 ->required()
                 ->rows(4),
 
-            Forms\Components\Textarea::make('reference')
-                ->label('Referencia')
+            Forms\Components\Textarea::make('general_feedback')
+                ->label('Retroalimentación general')
                 ->required()
-                ->rows(2),
+                ->rows(3)
+                ->helperText('Se mostrará como retroalimentación de la pregunta.'),
 
             Forms\Components\Toggle::make('is_active')
                 ->label('Activa')
@@ -66,17 +72,17 @@ class QuestionResource extends Resource
                             ->label('Opción D')
                             ->required()
                             ->rows(2),
-                    ]),
 
-                    Forms\Components\Select::make('correct_option')
-                        ->label('Respuesta correcta')
-                        ->options([
-                            'A' => 'A',
-                            'B' => 'B',
-                            'C' => 'C',
-                            'D' => 'D',
-                        ])
-                        ->required(),
+                        Forms\Components\Select::make('correct_option')
+                            ->label('Respuesta correcta')
+                            ->options([
+                                'A' => 'A',
+                                'B' => 'B',
+                                'C' => 'C',
+                                'D' => 'D',
+                            ])
+                            ->required(),
+                    ]),
                 ]),
         ]);
     }
@@ -109,16 +115,13 @@ class QuestionResource extends Resource
                     ->label('Actualizado')
                     ->dateTime(),
             ])
-
-            // ✅ FILTRO SELECTOR POR ESPECIALIDAD (dropdown)
             ->filters([
                 Tables\Filters\SelectFilter::make('specialty_id')
                     ->label('Especialidad')
                     ->options(fn () => Specialty::query()->orderBy('name')->pluck('name', 'id')->toArray())
                     ->searchable()
-                    ->preload(), // carga opciones desde el inicio (mejor UX)
+                    ->preload(),
             ])
-
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])

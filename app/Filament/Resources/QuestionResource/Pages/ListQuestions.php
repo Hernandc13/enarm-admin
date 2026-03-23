@@ -20,7 +20,6 @@ class ListQuestions extends ListRecords
             Actions\CreateAction::make()
                 ->label('Nueva pregunta'),
 
-            // ✅ NUEVO: Descargar formato GIFT
             Actions\Action::make('downloadGiftTemplate')
                 ->label('Descargar formato GIFT')
                 ->icon('heroicon-o-arrow-down-tray')
@@ -31,7 +30,10 @@ class ListQuestions extends ListRecords
             Actions\Action::make('importGift')
                 ->label('Importar GIFT')
                 ->icon('heroicon-o-arrow-up-tray')
+                ->modalHeading('Importar banco de preguntas en formato GIFT')
+                ->modalDescription('Carga un archivo .gift con preguntas agrupadas por $CATEGORY y retroalimentación general dentro del bloque de respuestas.')
                 ->form([
+
                     Forms\Components\FileUpload::make('file')
                         ->label('Archivo .gift')
                         ->required()
@@ -43,10 +45,11 @@ class ListQuestions extends ListRecords
                         ])
                         ->disk('public')
                         ->directory('imports/gift')
-                        ->preserveFilenames(),
+                        ->preserveFilenames()
+                        ->helperText('Extensiones permitidas: .gift Tamaño máximo: 10 MB.'),
 
                     Forms\Components\Select::make('on_duplicate')
-                        ->label('Si se encuentran preguntas idénticas, ¿qué quieres hacer?')
+                        ->label('Si se encuentran preguntas duplicadas')
                         ->options([
                             'update' => 'Actualizar (sobrescribir)',
                             'skip'   => 'Omitir (no importar)',
@@ -77,6 +80,7 @@ class ListQuestions extends ListRecords
                             ->title('Importación con errores')
                             ->body($msg . (count($result['errors']) > 10 ? "\n... (más errores)" : ''))
                             ->danger()
+                            ->persistent()
                             ->send();
 
                         return;
@@ -88,7 +92,6 @@ class ListQuestions extends ListRecords
                         ->success()
                         ->send();
 
-                    // refrescar tabla
                     $this->resetTable();
                 }),
         ];

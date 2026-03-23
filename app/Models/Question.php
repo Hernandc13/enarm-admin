@@ -9,7 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Question extends Model
 {
     protected $fillable = [
-        'specialty_id','gift_id','stem','reference','content_hash','is_active'
+        'specialty_id',
+        'gift_id',
+        'stem',
+        'general_feedback',
+        'content_hash',
+        'is_active',
     ];
 
     public function specialty(): BelongsTo

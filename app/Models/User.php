@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\CustomResetPasswordNotification;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,26 +14,18 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        // Base
         'name',
         'last_name',
         'email',
         'password',
         'is_admin',
 
-        // ✅ Nuevos campos (solo manual/excel)
-        'origin_university',     // universidad de origen
-        'origin_municipality',   // municipio de procedencia
-        'desired_specialty',     // especialidad deseada
-        'whatsapp_number',       // numero de whatsapp
+        'origin_university',
+        'origin_municipality',
+        'desired_specialty',
+        'whatsapp_number',
 
-        // Moodle / App access
         'moodle_user_id',
         'is_from_moodle',
         'has_app_access',
@@ -41,24 +34,12 @@ class User extends Authenticatable implements FilamentUser
         'synced_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
-
-        // si devuelves el modelo completo en /me, evita exponerlo por error:
         'moodle_user_id',
     ];
 
-    /**
-     * Casts.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -75,17 +56,11 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    /**
-     * Accessor: nombre completo.
-     */
     public function getFullnameAttribute(): string
     {
         return trim(($this->name ?? '') . ' ' . ($this->last_name ?? ''));
     }
 
-    /**
-     * Solo admins pueden acceder al panel admin_enarm.
-     */
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin_enarm') {
@@ -95,13 +70,18 @@ class User extends Authenticatable implements FilamentUser
         return false;
     }
 
-    /**
-     * Helper: es usuario manual/excel (NO Moodle, NO admin)
-     */
     public function isManualAppUser(): bool
     {
         return ! (bool) ($this->is_admin ?? false)
             && ! (bool) ($this->is_from_moodle ?? false)
             && empty($this->moodle_user_id);
+    }
+
+    /**
+     * Personaliza el correo de recuperación de contraseña.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new CustomResetPasswordNotification($token));
     }
 }
